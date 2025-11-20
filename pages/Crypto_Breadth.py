@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 DB_URL = st.secrets["DB_URL"]
+
 st.set_page_config("Crypto Breadth", layout="wide")
 ###############################
 
@@ -40,6 +41,26 @@ def load_prices():
 ###############################
 df = load_breadth()
 df_btc = load_prices()
+
+params = st.query_params  # New official method
+
+if "api" in params:
+    api_name = params.get("api", "")
+    fmt = params.get("format", "csv")
+
+    # Handle breadth endpoint
+    if api_name == "breadth":
+        df = load_breadth()
+
+        if fmt == "csv":
+            st.write(df.to_csv(index=True))
+        elif fmt == "json":
+            st.json(df.reset_index().to_dict(orient="records"))
+        else:
+            st.write("Unsupported format. Use csv or json.")
+
+        st.stop()  # IMPORTANT: Prevent UI from loading
+
 
 st.title("Crypto Breadth")
 st.text("""
@@ -93,6 +114,9 @@ st.plotly_chart(fig, use_container_width=True)
 st.markdown("---")
 with st.expander("Full DataFrame"):
     st.dataframe(df)
+
+with st.expander("Google Sheets Integration"):
+    st.code('=IMPORTDATA("https://yourapp.streamlit.app/?api=breadth&format=csv")')
 
 with st.expander("Source Code"):
     st.code(
